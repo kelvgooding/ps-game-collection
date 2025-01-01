@@ -10,11 +10,12 @@ Version: 1.2
 import auth
 from psnawp_api import PSNAWP
 import sqlite3
+import csv
 
 # PSNAWP Variables
 
 psnawp = PSNAWP(auth.api_auth['psn_token'])
-myself = psnawp.me()
+psn_connect = psnawp.me()
 
 # SQLite3 Variables
 
@@ -29,12 +30,39 @@ c.execute('DELETE FROM COLLECTION')
 
 # Iterate data and insert into all database tables.
 
-for i in myself.title_stats():
+for i in psn_connect.title_stats():
 
     # Temporary Fix - Insert data into the COLLECTION table, then use SQL to seperate data per console based on the title_id code.
     # Solution - This should be split by using the platform to stop the 200 limit being used.
 
     c.execute(f'INSERT INTO COLLECTION VALUES ("{i.title_id}", "{i.name.upper()}", "{str(i.first_played_date_time)[0:19]}", "{str(i.last_played_date_time)[0:19]}", "{str(i.category).replace("PlatformCategory.", "")}", "{i.play_count}", "{int(i.play_duration.seconds / 60)}", "{i.image_url}");')
+
+
+import csv
+
+# Open the CSV file in write mode
+with open('collection_data.csv', mode='w', newline='', encoding='utf-8') as file:
+    writer = csv.writer(file)
+
+    # Write the header row
+    writer.writerow([
+        'Title ID', 'Name', 'First Played Date', 'Last Played Date', 'Category', 'Play Count', 'Play Duration (mins)', 'Image URL'
+    ])
+
+    # Iterate through the title_stats and write rows
+    for i in psn_connect.title_stats():
+        writer.writerow([
+            i.title_id,
+            i.name.upper(),
+            str(i.first_played_date_time)[0:19],
+            str(i.last_played_date_time)[0:19],
+            str(i.category).replace("PlatformCategory.", ""),
+            i.play_count,
+            int(i.play_duration.seconds / 60),
+            i.image_url
+        ])
+
+print("Data successfully exported to 'collection_data.csv'")
 
 # PS5 Table
 
