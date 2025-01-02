@@ -20,8 +20,8 @@ import sqlite3
 base_path = os.path.dirname(os.path.abspath(__file__))
 filename = 'psn_game_collection'
 sql_script = f'{base_path}/scripts/sql/create_tables.sql'
-db_check.check_db(f'{base_path}', f'{db_filename}.db', f'{sql_script}')
-conn = db_check.sqlite3.connect(f'os.path.join({base_path}, {db_filename}.db'), check_same_thread=False)
+db_check.check_db(f'{base_path}', f'{filename}.db', f'{sql_script}')
+conn = db_check.sqlite3.connect(os.path.join(f'{base_path}', f'{filename}.db'), check_same_thread=False)
 c = conn.cursor()
 
 # PSNAWP Variables
