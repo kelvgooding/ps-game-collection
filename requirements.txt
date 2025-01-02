@@ -1,1 +1,2 @@
-PSNAWP
+openpyxl>=3.0.10
+psnawp>=1.3.0

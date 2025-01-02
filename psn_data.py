@@ -1,30 +1,27 @@
 """
 Author: Kelv Gooding
 Date Created: 2023-05-16
-Date Updated: 2025-01-01
-Version: 1.3
+Date Updated: 2025-01-02
+Version: 1.4
 """
 
 # Modules
 
 from modules import db_check
+from openpyxl import Workbook
 from psnawp_api import PSNAWP
 import auth
+import csv
 import os
 import sqlite3
 
-# General Variables
-
-# Default base path is root. Update the base path based on your environment.
-
-base_path = os.path.dirname(os.path.abspath(__file__))
-db_filename = 'psn_game_collection.db'
-sql_script = f'{base_path}/scripts/sql/create_tables.sql'
-
 # SQLite3 Variables
 
-db_check.check_db(f'{base_path}', f'{db_filename}', f'{sql_script}')
-conn = db_check.sqlite3.connect(os.path.join(base_path, db_filename), check_same_thread=False)
+base_path = os.path.dirname(os.path.abspath(__file__))
+filename = 'psn_game_collection'
+sql_script = f'{base_path}/scripts/sql/create_tables.sql'
+db_check.check_db(f'{base_path}', f'{db_filename}.db', f'{sql_script}')
+conn = db_check.sqlite3.connect(f'os.path.join({base_path}, {db_filename}.db'), check_same_thread=False)
 c = conn.cursor()
 
 # PSNAWP Variables
@@ -32,29 +29,43 @@ c = conn.cursor()
 psnawp = PSNAWP(auth.api_auth['psn_token'])
 psn_connect = psnawp.me()
 
-# Delete data from all database tables before insetting new data.
-
-c.execute('DELETE FROM PS4')
-c.execute('DELETE FROM PS5')
 c.execute('DELETE FROM COLLECTION')
-
-# Iterate data and insert into all database tables.
-
 for i in psn_connect.title_stats():
-
-    # Temporary Fix - Insert data into the COLLECTION table, then use SQL to seperate data per console based on the title_id code.
-    # Solution - This should be split by using the platform to stop the 200 limit being used.
-
     c.execute(f'INSERT INTO COLLECTION VALUES ("{i.title_id}", "{i.name.upper()}", "{str(i.first_played_date_time)[0:19]}", "{str(i.last_played_date_time)[0:19]}", "{str(i.category).replace("PlatformCategory.", "")}", "{i.play_count}", "{int(i.play_duration.seconds / 60)}", "{i.image_url}");')
 
-# PS5 Table
+def game_data_db(console, product_code):
 
-c.execute('INSERT INTO PS5 SELECT * FROM COLLECTION WHERE title_id LIKE "%PPSA%";')
-c.execute('UPDATE PS5 SET platform = "PS5" WHERE platform = "UNKNOWN"')
+    c.execute(f'DELETE FROM {console}')
+    c.execute(f'INSERT INTO {console} SELECT * FROM COLLECTION WHERE title_id LIKE "%{product_code}%";')
+    c.execute(f'UPDATE {console} SET platform = "{console}" WHERE platform = "UNKNOWN"')
 
-# PS4 Table
+    conn.commit()
 
-c.execute('INSERT INTO PS4 SELECT * FROM COLLECTION WHERE title_id LIKE "%CUSA%";')
-c.execute('UPDATE PS4 SET platform = "PS4" WHERE platform = "UNKNOWN"')
+def game_data_xlsx(base_path):
 
-conn.commit()
+    xlsx_filename = os.path.join(f'{base_path}', f'{filename}.xlsx')
+    workbook = Workbook()
+
+    tables = ['COLLECTION', 'PS4', 'PS5']
+
+    for idx, table in enumerate(tables):
+        if idx == 0:
+            sheet = workbook.active
+            sheet.title = table
+        else:
+            sheet = workbook.create_sheet(title=table)
+
+        c.execute(f"SELECT * FROM {table}")
+        rows = c.fetchall()
+        headers = [description[0] for description in c.description]
+        sheet.append(headers)
+        for row in rows:
+            sheet.append(row)
+
+    workbook.save(xlsx_filename)
+
+game_data_db('PS4', 'CUSA')
+game_data_db('PS5', 'PPSA')
+create_xlsx_with_sheets(base_path)
+
+print(f'COMPLETE!')
