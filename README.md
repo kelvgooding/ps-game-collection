@@ -2,7 +2,7 @@
 
 A script which gathers data based on your collection on PlayStation 4 and PlayStation 5 games directly from your PSN account.
 
-## Reqrequisisit
+## Requirements
 
 psn_token sso cookie can be obtained by first login into your PSN account https://www.playstation.com/en-gb/ and use the following link to find the npsso value: https://ca.account.sony.com/api/v1/ssocookie. Add this value into auth.py on Line 6
 
@@ -25,4 +25,4 @@ python3 psn_data.py
 4. This will export 2 files:
 
 * psn_game_collection.db
-* psn_game_collection.csv
+* psn_game_collection.xlsx
