@@ -1,8 +1,8 @@
 """
 Author: Kelv Gooding
 Date Created: 2023-05-16
-Date Updated: 2025-01-02
-Version: 1.4
+Date Updated: 2025-01-03
+Version: 1.5
 """
 
 # Modules
@@ -66,6 +66,6 @@ def game_data_xlsx(base_path):
 
 game_data_db('PS4', 'CUSA')
 game_data_db('PS5', 'PPSA')
-create_xlsx_with_sheets(base_path)
+game_data_xlsx(base_path)
 
 print(f'COMPLETE!')
