@@ -1,8 +1,8 @@
 """
 Author: Kelv Gooding
 Date Created: 2023-05-16
-Date Updated: 2025-01-03
-Version: 1.5
+Date Updated: 2025-01-02
+Version: 1.6
 """
 
 # Modules
@@ -29,8 +29,9 @@ c = conn.cursor()
 psnawp = PSNAWP(auth.api_auth['psn_token'])
 psn_connect = psnawp.me()
 
-c.execute('DELETE FROM COLLECTION')
-for i in psn_connect.title_stats():
+def generate_game_data():
+    c.execute('DELETE FROM COLLECTION')
+    for i in psn_connect.title_stats():
     c.execute(f'INSERT INTO COLLECTION VALUES ("{i.title_id}", "{i.name.upper()}", "{str(i.first_played_date_time)[0:19]}", "{str(i.last_played_date_time)[0:19]}", "{str(i.category).replace("PlatformCategory.", "")}", "{i.play_count}", "{int(i.play_duration.seconds / 60)}", "{i.image_url}");')
 
 def game_data_db(console, product_code):
@@ -38,7 +39,6 @@ def game_data_db(console, product_code):
     c.execute(f'DELETE FROM {console}')
     c.execute(f'INSERT INTO {console} SELECT * FROM COLLECTION WHERE title_id LIKE "%{product_code}%";')
     c.execute(f'UPDATE {console} SET platform = "{console}" WHERE platform = "UNKNOWN"')
-
     conn.commit()
 
 def game_data_xlsx(base_path):
@@ -63,9 +63,10 @@ def game_data_xlsx(base_path):
             sheet.append(row)
 
     workbook.save(xlsx_filename)
+    generate_game_data()
 
 game_data_db('PS4', 'CUSA')
 game_data_db('PS5', 'PPSA')
-game_data_xlsx(base_path)
+create_xlsx_with_sheets(base_path)
 
 print(f'COMPLETE!')
